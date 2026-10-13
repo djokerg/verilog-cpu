@@ -1,0 +1,24 @@
+# Simulation / build output
+build/
+test-logs/
+site/
+work/
+transcript
+*.wlf
+wlft*
+vlog_compile.log
+
+# Quartus output (tooling/makefile)
+db/
+incremental_db/
+*.qpf
+*.qsf
+*.sof
+*.pof
+*.rpt
+*.summary
+*.smsg
+*.chg
+smart.log
+
+.DS_Store

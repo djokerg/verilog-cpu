@@ -1,0 +1,7 @@
+.git
+.github
+build
+site
+test-logs
+tooling/xpack
+tooling/wlft*

@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- PAGE START -->
+<title>DE0 CPU Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=Public+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: the board is the hero (left), the CPU's insides sit beside it (right); controls ride above the board. */
+:root {
+  --bg: #eef1f4;
+  --surface: #ffffff;
+  --ink: #18212b;
+  --muted: #5b6876;
+  --line: #d3d9e0;
+  --accent: #0d6e8a;
+  --accent-ink: #ffffff;
+  --read: #2f7d4f;
+  --write: #b4521c;
+  --font-display: "Michroma", "Eurostile", "Arial Black", sans-serif;
+  --font-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  /* the PCB keeps its own colours in both themes */
+  --pcb: #123a5a;
+  --pcb-edge: #0b2740;
+  --silk: #e8eef3;
+  --seg-on: #ff3b2f;
+  --seg-off: #3a1716;
+  --led-on: #4dff6a;
+  --led-off: #173a22;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151b; --surface: #17202a; --ink: #e3e9ef; --muted: #93a2b1; --line: #2a3643;
+    --accent: #5bc0dc; --accent-ink: #0b1218; --read: #6fd39a; --write: #f39a62; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151b; --surface: #17202a; --ink: #e3e9ef; --muted: #93a2b1; --line: #2a3643;
+  --accent: #5bc0dc; --accent-ink: #0b1218; --read: #6fd39a; --write: #f39a62; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 40px; display: grid; gap: 20px; }
+header h1 { font-family: var(--font-display); font-size: clamp(1.25rem, 3vw, 1.7rem); letter-spacing: .04em; margin: 0; text-wrap: balance; }
+header p { margin: 6px 0 0; color: var(--muted); max-width: 70ch; }
+.main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+
+/* controls */
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+button, select { font: 600 14px var(--font-body); border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 8px 14px; cursor: pointer; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); min-width: 110px; }
+button:focus-visible, select:focus-visible, .switch:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+label.inline { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 14px; }
+.prompt { border: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border-radius: 10px; padding: 10px 14px; font-size: 14px; }
+.prompt strong { font-family: var(--font-mono); }
+
+/* the board */
+.board { background: var(--pcb); border: 3px solid var(--pcb-edge); border-radius: 14px; padding: 18px 18px 14px; color: var(--silk);
+  background-image: radial-gradient(circle at 12px 12px, #1b4a70 2px, transparent 2.5px); background-size: 28px 28px; overflow-x: auto; }
+.board-inner { min-width: 520px; display: grid; gap: 18px; }
+.silk { font-family: var(--font-display); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--silk); opacity: .85; }
+.row { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
+.chip { background: #1a1d21; border-radius: 6px; padding: 10px 14px; color: #c9ced4; font-family: var(--font-display); font-size: 10px; letter-spacing: .1em; display: grid; gap: 2px; }
+.chip b { font-size: 13px; color: #f1f3f5; }
+.displays { display: flex; gap: 22px; }
+.hexgroup { display: grid; gap: 6px; justify-items: center; }
+.digits { display: flex; gap: 6px; background: #0b0b0c; padding: 8px 10px; border-radius: 6px; }
+.digits svg { width: 44px; height: 72px; }
+.leds { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; }
+.led { display: grid; justify-items: center; gap: 4px; }
+.led i { width: 16px; height: 10px; border-radius: 3px; background: var(--led-off); box-shadow: inset 0 0 0 1px #0007; display: block; }
+.led.on i { background: var(--led-on); box-shadow: 0 0 10px var(--led-on), 0 0 2px #fff inset; }
+.led.nc { opacity: .45; }
+.switches { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; }
+.switch { appearance: none; border: 0; padding: 0; background: none; display: grid; justify-items: center; gap: 4px; cursor: pointer; color: var(--silk); font: 10px var(--font-display); }
+.switch .slot { width: 18px; height: 40px; border-radius: 4px; background: #0a0d10; position: relative; box-shadow: inset 0 0 0 1px #000; }
+.switch .knob { position: absolute; left: 2px; right: 2px; height: 16px; border-radius: 3px; background: linear-gradient(#f4f4f4, #b9bec4); transition: top .12s; top: 22px; }
+.switch[aria-pressed="true"] .knob { top: 2px; }
+.switch.inert { opacity: .55; }
+.switch.reset .slot { box-shadow: inset 0 0 0 2px #e9b949; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-family: var(--font-mono); font-size: 12px; color: var(--silk); }
+.value { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* CPU panel */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 16px; min-width: 0; }
+.panel h2 { font: 700 12px var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.state { display: grid; gap: 4px; }
+.state .name { font-family: var(--font-mono); font-size: 18px; font-weight: 600; color: var(--accent); }
+.state .what { color: var(--ink); font-size: 14px; min-height: 2.6em; }
+.kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.kv div { border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; display: grid; }
+.kv span { font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.kv b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 15px; }
+.listing { font-family: var(--font-mono); font-size: 13px; display: grid; overflow-x: auto; }
+.listing div { display: grid; grid-template-columns: 2.4em 3.6em minmax(10em, 1fr) minmax(0, 1.2fr); gap: 8px; padding: 2px 6px; border-radius: 6px; white-space: nowrap; }
+.listing div.cur { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.listing .c { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.mem { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 3px; font-family: var(--font-mono); font-size: 11px; }
+.mem div { border: 1px solid var(--line); border-radius: 4px; padding: 3px 2px; text-align: center; font-variant-numeric: tabular-nums; position: relative; }
+.mem div.reg { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+.mem div.pc { outline: 2px solid var(--accent); }
+.mem div.rd { background: color-mix(in srgb, var(--read) 22%, transparent); }
+.mem div.wr { background: color-mix(in srgb, var(--write) 30%, transparent); }
+.memkey { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.memkey i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.history { font-family: var(--font-mono); }
+.error { border: 1px solid var(--write); color: var(--ink); border-radius: 10px; padding: 12px 14px; }
+footer { color: var(--muted); font-size: 13px; }
+footer a { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .switch .knob { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>DE0 CPU Board</h1>
+    <p>A 16-bit CPU written in Verilog, running on a virtual Terasic DE0. This is the real RTL compiled to WebAssembly,
+      so every digit, LED and register below comes from the hardware model. Set the input on SW3–SW0, reset with SW9,
+      and watch the program counter step through the program on the 7-segment display.</p>
+  </header>
+
+  <div class="controls" role="toolbar" aria-label="Clock controls">
+    <button id="run" class="primary" type="button">Run</button>
+    <button id="step" type="button" title="One CPU clock (→ key)">Step clock</button>
+    <label class="inline" for="speed">Clock
+      <select id="speed">
+        <option value="1">1 Hz (real board)</option>
+        <option value="3">3 Hz</option>
+        <option value="8" selected>8 Hz</option>
+        <option value="25">25 Hz</option>
+        <option value="100">100 Hz</option>
+      </select>
+    </label>
+    <label class="inline" for="program">Program
+      <select id="program"></select>
+    </label>
+    <button id="reprogram" type="button" title="Reload the memory image and reset, like reprogramming the FPGA">Reprogram FPGA</button>
+    <label class="inline" for="waitin"><input id="waitin" type="checkbox" checked> Pause at IN</label>
+  </div>
+
+  <div id="prompt" class="prompt" aria-live="polite"></div>
+
+  <div class="main">
+    <section class="board" aria-label="Virtual DE0 board">
+      <div class="board-inner">
+        <div class="row">
+          <div class="chip"><span>ALTERA</span><b>CYCLONE III</b><span>EP3C16F484C6</span></div>
+          <div class="displays">
+            <div class="hexgroup"><div class="digits" id="hex-sp"></div><span class="silk">HEX3 · HEX2 &nbsp;= SP</span></div>
+            <div class="hexgroup"><div class="digits" id="hex-pc"></div><span class="silk">HEX1 · HEX0 &nbsp;= PC</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="leds" id="leds"></div>
+        </div>
+        <div>
+          <div class="switches" id="switches"></div>
+        </div>
+        <div class="legend">
+          <span>LEDG4–0 = OUT <b class="value" id="ledval">0</b></span>
+          <span>SW3–0 = IN <b class="value" id="swval">0</b></span>
+          <span>SW9 = reset (down) / run (up)</span>
+          <span>CPU clock <b class="value" id="cycles">0</b></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Inside the CPU">
+      <div class="state">
+        <h2>Control unit state</h2>
+        <div class="name" id="state">-</div>
+        <div class="what" id="what"></div>
+      </div>
+      <div>
+        <h2>Registers</h2>
+        <div class="kv" id="regs"></div>
+      </div>
+      <div>
+        <h2>Program</h2>
+        <div class="listing" id="listing"></div>
+      </div>
+      <div>
+        <h2>Memory · 64 × 16-bit words</h2>
+        <div class="mem" id="mem"></div>
+        <div class="memkey"><span><i style="outline:2px solid var(--accent)"></i>PC</span><span><i style="background:color-mix(in srgb, var(--read) 40%, transparent)"></i>read</span><span><i style="background:color-mix(in srgb, var(--write) 50%, transparent)"></i>write</span><span>words 1–7 = A–G</span></div>
+      </div>
+      <div>
+        <h2>LED output so far</h2>
+        <div class="history" id="history">-</div>
+      </div>
+    </section>
+  </div>
+
+  <footer>Verilog by Đorđe Grebović for the VLSI course at the School of Electrical Engineering, University of Belgrade.
+    Compiled with Verilator and Emscripten. <a href="https://github.com/djokerg/verilog-cpu">Source on GitHub</a>.</footer>
+</div>
+
+<script type="module">
+import createBoard from "./board.mjs";
+import { PROGRAMS } from "./programs.js";
+
+const $ = (id) => document.getElementById(id);
+const STATES = ["halt","fetch1","fetch2","fetch3","decode","execute_in","execute_out","execute_out_indirect",
+  "execute_stop_1","execute_stop_1_indirect","execute_stop_2","execute_stop_2_indirect","execute_stop_3",
+  "execute_stop_3_indirect","execute_mov","execute_mov_indirect_2","execute_mov_indirect_1","execute_mov_constant",
+  "decode_arithmetic_1_indirect","decode_arithmetic_2_indirect","decode_arithmetic_3","decode_arithmetic_3_indirect",
+  "execute_arithmetic","prefetch"];
+const WHAT = {
+  halt: "Stopped. STOP finished (or the board just powered up). Flip SW9 down and up to start again.",
+  prefetch: "Reset: PC is loaded with 8 (first instruction) and SP with 63.",
+  fetch1: "Put PC on the memory address bus and increment PC.",
+  fetch2: "The instruction word arrives from memory into IR. A MOV with a constant needs a second word.",
+  fetch3: "The constant (second word) arrives into the low half of IR.",
+  decode: "Decode the opcode and start the first memory access for the operands.",
+  execute_in: "Indirect IN: the target address arrived, store the switch value there.",
+  execute_out: "The operand arrived from memory. Show it on the LEDs.",
+  execute_out_indirect: "Indirect OUT: the pointer arrived, now read the value it points to.",
+  execute_stop_1: "STOP shows its first operand on the LEDs.",
+  execute_stop_2: "STOP shows its second operand on the LEDs.",
+  execute_stop_3: "STOP shows its third operand on the LEDs.",
+  execute_mov: "The source value arrived. Write it to the destination.",
+  execute_mov_indirect_1: "Indirect destination: write the value (held in ACC) to the address that arrived.",
+  execute_mov_indirect_2: "Indirect source: the pointer arrived, read the value it points to.",
+  decode_arithmetic_2_indirect: "Indirect second operand: the pointer arrived, read the value.",
+  decode_arithmetic_3: "Second operand goes into ACC; read the third operand.",
+  decode_arithmetic_3_indirect: "Indirect third operand: the pointer arrived, read the value.",
+  execute_arithmetic: "The ALU combines ACC with the third operand and stores the result.",
+  decode_arithmetic_1_indirect: "Indirect destination: store the ALU result at the address that arrived.",
+};
+WHAT.execute_stop_1_indirect = WHAT.execute_stop_2_indirect = WHAT.execute_stop_3_indirect =
+  "Indirect STOP operand: the pointer arrived, read the value it points to.";
+const OUTPUT_STATES = new Set([6, 8, 10, 12]);
+const REG = "-ABCDEFG";
+
+// ---- disassembler (mirrors sim/board.py)
+const opnd = (f) => (f & 8 ? `[${REG[f & 7]}]` : REG[f & 7]);
+function disasm(hi, lo) {
+  const op = hi >> 12, f1 = (hi >> 8) & 15, f2 = (hi >> 4) & 15, f3 = hi & 15;
+  if (op === 0) return f3 === 8 ? `MOV ${opnd(f1)}, ${lo ?? "#"}` : `MOV ${opnd(f1)}, ${opnd(f2)}`;
+  if (op >= 1 && op <= 4) return `${["", "ADD", "SUB", "MUL", "DIV"][op]} ${opnd(f1)}, ${opnd(f2)}, ${opnd(f3)}`;
+  if (op === 7) return `IN ${opnd(f1)}`;
+  if (op === 8) return `OUT ${opnd(f1)}`;
+  if (op === 15) { const o = [f1, f2, f3].filter(Boolean).map(opnd); return "STOP" + (o.length ? " " + o.join(", ") : ""); }
+  return "???";
+}
+
+// ---- 7-segment digit (segments a..g, active low as driven by ssd.v)
+const SEG_POLY = [
+  "8,4 36,4 31,9 13,9", "37,6 37,34 32,31 32,11", "37,38 37,66 32,61 32,41", "8,68 36,68 31,63 13,63",
+  "7,38 12,41 12,61 7,66", "7,6 12,11 12,31 7,34", "9,36 13,32 31,32 35,36 31,40 13,40",
+];
+function makeDigits(el) {
+  const svgs = [];
+  for (let i = 0; i < 2; i++) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 44 72");
+    svg.innerHTML = SEG_POLY.map((p) => `<polygon points="${p}" fill="var(--seg-off)"/>`).join("") +
+      `<circle cx="40.5" cy="67" r="2.2" fill="var(--seg-off)"/>`;
+    el.appendChild(svg); svgs.push(svg);
+  }
+  return svgs;
+}
+function paintDigit(svg, bits) {
+  [...svg.querySelectorAll("polygon")].forEach((p, i) =>
+    p.setAttribute("fill", (bits >> i) & 1 ? "var(--seg-off)" : "var(--seg-on)"));
+}
+
+// ---- build the board
+const [sp1, sp0] = makeDigits($("hex-sp"));
+const [pc1, pc0] = makeDigits($("hex-pc"));
+const ledEls = [];
+for (let i = 9; i >= 0; i--) {
+  const d = document.createElement("div");
+  d.className = "led" + (i > 4 ? " nc" : "");
+  d.innerHTML = `<i></i><span class="silk">LEDG${i}</span>`;
+  d.title = i > 4 ? "Not driven by this design" : `OUT bit ${i}`;
+  $("leds").appendChild(d); ledEls[i] = d;
+}
+let sw = 1 << 9;
+const swEls = [];
+for (let i = 9; i >= 0; i--) {
+  const b = document.createElement("button");
+  b.type = "button"; b.id = `sw${i}`;
+  b.className = "switch" + (i === 9 ? " reset" : i > 3 ? " inert" : "");
+  b.innerHTML = `<span class="slot"><span class="knob"></span></span><span>SW${i}</span>`;
+  b.setAttribute("aria-label", i === 9 ? "SW9 reset" : i > 3 ? `SW${i} (unused)` : `SW${i} input bit ${i}`);
+  b.addEventListener("click", () => toggleSwitch(i));
+  $("switches").appendChild(b); swEls[i] = b;
+}
+
+// ---- simulator
+let m;
+try {
+  m = await createBoard();
+} catch (e) {
+  $("prompt").className = "error";
+  $("prompt").textContent = `The simulator could not start in this browser (${e.message || e}). ` +
+    "It needs WebAssembly; try a current Chrome, Firefox or Safari.";
+  throw e;
+}
+m._board_init();
+
+let running = false, cycles = 0, history = [], prevState = -1, waitedAt = -1, programIdx = 0;
+
+function setSwitches(v) { sw = v; m._set_switches(sw); }
+function toggleSwitch(i) {
+  setSwitches(sw ^ (1 << i));
+  if (i === 9 && (sw >> 9) & 1) { cycles = 0; history = []; prevState = -1; waitedAt = -1; }
+  render();
+}
+function pulseReset() {           // SW9 down, then up: the falling edge resets the CPU
+  setSwitches(sw & ~(1 << 9));
+  setSwitches(sw | (1 << 9));
+  cycles = 0; history = []; prevState = -1; waitedAt = -1;
+}
+function loadProgram(i) {
+  programIdx = i;
+  PROGRAMS[i].mem.forEach((w, a) => m._mem_write(a, w));
+  pulseReset();
+  render();
+}
+
+function waitingAtIn() {
+  return $("waitin").checked && (sw >> 9) & 1 && m._state() === 4 && (m._ir_h() >> 12) === 7 && waitedAt !== cycles;
+}
+
+function clock() {
+  if (waitingAtIn()) { waitedAt = cycles; setRunning(false); render(); return false; }
+  const before = m._state();
+  m._cpu_clock();
+  if ((sw >> 9) & 1) cycles++;
+  if (OUTPUT_STATES.has(before)) history.push(m._led() & 31);
+  prevState = before;
+  if (m._state() === 0 && (sw >> 9) & 1) setRunning(false);
+  return true;
+}
+
+// ---- render
+function render() {
+  const h = m._hex();
+  paintDigit(sp1, (h >> 21) & 127); paintDigit(sp0, (h >> 14) & 127);
+  paintDigit(pc1, (h >> 7) & 127); paintDigit(pc0, h & 127);
+  const led = m._led();
+  for (let i = 0; i < 10; i++) ledEls[i].classList.toggle("on", i <= 4 && ((led >> i) & 1) === 1);
+  for (let i = 0; i < 10; i++) swEls[i].setAttribute("aria-pressed", String(((sw >> i) & 1) === 1));
+  $("ledval").textContent = led & 31;
+  $("swval").textContent = sw & 15;
+  $("cycles").textContent = cycles;
+
+  const st = m._state(), name = STATES[st] ?? st, ir = m._ir_h(), irl = m._ir_l();
+  $("state").textContent = name;
+  $("what").textContent = (sw >> 9) & 1 ? WHAT[name] ?? "" : "SW9 is down: the CPU is held in reset. Flip it up to run.";
+
+  const regs = [["PC", m._pc()], ["SP", m._sp()], ["IR", ir.toString(16).padStart(4, "0")], ["ACC", m._acc()]];
+  for (let r = 1; r <= 7; r++) regs.push([REG[r] + ` (mem ${r})`, m._mem_read(r)]);
+  $("regs").innerHTML = regs.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("");
+
+  // listing from the live memory, starting at 8
+  const P = PROGRAMS[programIdx], rows = [];
+  const curPc = st === 0 ? -1 : instructionStart();
+  for (let a = 8; a < 64;) {
+    const w = m._mem_read(a), two = (w >> 12) === 0 && (w & 15) === 8;
+    const text = disasm(w, two ? m._mem_read(a + 1) : undefined);
+    rows.push(`<div class="${a === curPc ? "cur" : ""}"><span>${a}</span><span>${w.toString(16).padStart(4, "0")}</span><span>${text}</span><span class="c">${(P.comments[a] ?? "").replace(/</g, "&lt;")}</span></div>`);
+    if ((w >> 12) === 15) break;
+    a += two ? 2 : 1;
+  }
+  $("listing").innerHTML = rows.join("");
+
+  const addr = m._mem_addr(), we = m._mem_we(), pcNow = m._pc();
+  let cells = "";
+  for (let a = 0; a < 64; a++) {
+    const cls = [a >= 1 && a <= 7 ? "reg" : "", a === pcNow ? "pc" : "",
+      a === addr && st !== 0 && st !== 23 ? (we ? "wr" : "rd") : ""].join(" ");
+    cells += `<div class="${cls}" title="mem[${a}]">${m._mem_read(a).toString(16).padStart(4, "0")}</div>`;
+  }
+  $("mem").innerHTML = cells;
+  $("history").textContent = history.length ? history.join(" → ") : "-";
+
+  // what the person at the board should do next
+  let msg;
+  if (!((sw >> 9) & 1)) msg = "SW9 is down (reset). Flip <strong>SW9</strong> up to let the CPU run.";
+  else if (st === 0) msg = cycles ? `<strong>HALT</strong>. The program finished. LED output: ${history.join(" → ") || "-"}. Flip SW9 down and up to run it again.` :
+    "The CPU is halted. Flip SW9 down and up to reset it.";
+  else if (st === 4 && (ir >> 12) === 7) msg = `<strong>${disasm(ir)}</strong> is reading the switches. Set SW3–SW0 (now <strong>${sw & 15}</strong>), then press Run or Step.`;
+  else msg = running ? `Running at ${$("speed").value} Hz.` : "Paused. Press Run, or Step to advance one CPU clock.";
+  $("prompt").className = "prompt";
+  $("prompt").innerHTML = msg;
+  $("run").textContent = running ? "Pause" : "Run";
+}
+
+function instructionStart() {
+  // the instruction currently in IR started at PC-1 (or PC-2 for MOV with a constant)
+  const st = m._state(), ir = m._ir_h(), pc = m._pc();
+  if (st === 1 || st === 23) return pc;
+  if (st === 2) return pc - 1;
+  return pc - ((ir >> 12) === 0 && (ir & 15) === 8 ? 2 : 1);
+}
+
+// ---- run loop
+let last = 0, acc = 0;
+function setRunning(on) { running = on; render(); }
+function frame(t) {
+  if (running) {
+    acc += Math.min(t - last, 250) / 1000 * Number($("speed").value);
+    while (acc >= 1 && running) { acc -= 1; if (!clock()) break; }
+    render();
+  } else acc = 0;
+  last = t;
+  requestAnimationFrame(frame);
+}
+$("run").addEventListener("click", () => {
+  if (!running && m._state() === 0 && (sw >> 9) & 1) pulseReset();
+  if (!running && waitingAtIn()) waitedAt = cycles;
+  setRunning(!running);
+});
+$("step").addEventListener("click", () => { if (waitingAtIn()) waitedAt = cycles; clock(); render(); });
+$("reprogram").addEventListener("click", () => { setRunning(false); loadProgram(programIdx); });
+$("program").innerHTML = PROGRAMS.map((p, i) => `<option value="${i}">${p.name}</option>`).join("");
+$("program").addEventListener("change", (e) => { setRunning(false); loadProgram(Number(e.target.value)); });
+$("waitin").addEventListener("change", render);
+$("speed").addEventListener("change", render);
+document.addEventListener("keydown", (e) => {
+  if (e.target.closest("select, input")) return;
+  if (e.key === " ") { e.preventDefault(); $("run").click(); }
+  if (e.key === "ArrowRight") { e.preventDefault(); $("step").click(); }
+});
+
+// Start in a working state: program loaded, reset, run up to the first IN with SW3-0 = 8.
+setSwitches((sw & ~15) | 8);
+loadProgram(0);
+for (let i = 0; i < 50 && clock(); i++);
+render();
+requestAnimationFrame(frame);
+</script>
+<!-- PAGE END -->
+</html>
