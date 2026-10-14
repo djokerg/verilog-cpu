@@ -7,8 +7,9 @@ It has a 24-state control unit, an 8-function ALU and 64 words of RAM preloaded 
 Input comes from the slide switches and output goes to the green LEDs. The program counter and stack pointer
 are shown in decimal on the 7-segment displays, with the clock slowed to 1 Hz so you can watch every step.
 
-<!-- VIDEO: drag the board video into this README in GitHub's web editor and put the generated
-     https://github.com/user-attachments/... link on its own line here. -->
+https://github.com/user-attachments/assets/0c55df8c-fa81-40e2-ad0a-ddc70223c1f0
+
+
 
 **[▶ Try it in your browser](https://djokerg.github.io/verilog-cpu/).** This is a virtual DE0 running this exact
 Verilog, compiled to WebAssembly. Flip the switches, reset with SW9 and step the clock.
