@@ -9,7 +9,26 @@ are shown in decimal on the 7-segment displays, with the clock slowed to 1 Hz so
 
 https://github.com/user-attachments/assets/0c55df8c-fa81-40e2-ad0a-ddc70223c1f0
 
+The board runs the demo program from [`tooling/mem_init.mif`](tooling/mem_init.mif), with the switches set to 8, 9 and 3
+for the three `IN` instructions:
 
+| Addr | Word | Instruction | Effect | LEDs |
+|---:|---|---|---|---:|
+| 8 | `7101` | `IN A` | A = 8 | |
+| 9 | `8101` | `OUT A` | | 8 |
+| 10 | `0210` | `MOV B, A` | B = 8 | |
+| 11 | `1312` | `ADD C, A, B` | C = 8 + 8 = 16 | |
+| 12 | `8301` | `OUT C` | | 16 |
+| 13 | `7401` | `IN D` | D = 9 | |
+| 14 | `2334` | `SUB C, C, D` | C = 16 − 9 = 7 | |
+| 15 | `0530` | `MOV E, C` | E = 7 | |
+| 16 | `8501` | `OUT E` | | 7 |
+| 17 | `7301` | `IN C` | C = 3 | |
+| 18 | `3553` | `MUL E, E, C` | E = 7 × 3 = 21 | |
+| 19 | `8501` | `OUT E` | | 21 |
+| 20 | `F000` | `STOP` | | |
+
+Addresses 0–7 and 21–63 hold zeros.
 
 **[▶ Try it in your browser](https://djokerg.github.io/verilog-cpu/).** This is a virtual DE0 running this exact
 Verilog, compiled to WebAssembly. Flip the switches, reset with SW9 and step the clock.
